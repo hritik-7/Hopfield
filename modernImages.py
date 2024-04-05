@@ -7,11 +7,9 @@ from skimage.color import rgb2gray
 from skimage.transform import resize
 
 from matplotlib import pyplot as plt
-from hopfield import Hopfield
-from hopfield import DAMDiscreteHopfield
+from hopfield import ContinuousHopfield
 
 import random
-
 
 #Randomly inverts data
 def randomFlipping(input, flipCount):
@@ -22,10 +20,10 @@ def randomFlipping(input, flipCount):
             flippy[i] = -1 * v
     return flippy
 
-##Invert full pattern
-#def fullFlipping(input):
-#    flippy = np.copy(input)
-#    return [-1 * flippy[i] for i in range(len(flippy))]
+#Invert full pattern
+def fullFlipping(input):
+    flippy = np.copy(input)
+    return [-1 * flippy[i] for i in range(len(flippy))]
 
 #Removes random chunk of data
 def randomBlocking(input, blockLevel):
@@ -36,7 +34,7 @@ def randomBlocking(input, blockLevel):
     yLoc = random.randint(0, int(dim - dim*blockLevel))
 
     for i in range(0, int(dim*blockLevel)):
-        blocked[int((yLoc+i)*dim + xLoc): int(dim*blockLevel)] = -1
+        blocked[int((yLoc+i)*dim + xLoc): int(dim*blockLevel)] = 0
     return blocked
 
 #Removes random chunk of data
@@ -44,12 +42,14 @@ def highBlocking(input, blockLevel):
     blocked = np.copy(input)
 
     for i in range(0, int(len(input)*blockLevel)):
-        blocked[i] = -1
+        blocked[i] = 0
     return blocked
 
 def preprocessing(img, dim=128):
     img = resize(img, (dim,dim), mode='reflect')
-    flatty = np.reshape(np.where(img>np.mean(img), 1, -1), (dim*dim))
+    #flatty = np.reshape(np.where(img>np.mean(img), 1, -1), (dim*dim))
+    flatty = np.reshape(img, (dim*dim))
+    print(flatty)
     return flatty
 
 def reshape(data):
@@ -60,8 +60,7 @@ def reshape(data):
 def comparePatterns(pat1, pat2):
     #numpy.array_equal(a1, a2, equal_nan=False)
     valNormal = np.sum(pat1 == pat2)
-    #valFlipped = np.sum(pat1 == fullFlipping(pat2))
-    valFlipped = np.sum(pat1 == pat2 * -1)
+    valFlipped = np.sum(pat1 == fullFlipping(pat2))
     if valNormal > valFlipped:
         print("Best normal")
         print("Amount same = ", valNormal/len(pat1))
@@ -86,16 +85,21 @@ for file in listdir("distinct"):
 
 #corrupted = [randomFlipping(d, 0.4) for d in pics]
 corrupted = [highBlocking(d, 0.4) for d in pics]
-
+for l in range(len(corrupted)-2):
+    print(np.min(corrupted[l]))
+    print(np.max(corrupted[l]))
+    print(np.min(pics[l]))
+    print(np.max(pics[l]))
+    comparePatterns(corrupted[l], pics[l])
             
-#hoppy = Hopfield(pics)
-hoppy = DAMDiscreteHopfield(pics)
+hoppy = ContinuousHopfield(pics)
 
 predictions = []
 longest = 0
-for l in range(len(corrupted)):
+for l in range(len(corrupted)-2):
     predictions.append(hoppy.predict(corrupted[l], 7))
 
+    comparePatterns(predictions[l][0], pics[l])
     comparePatterns(predictions[l][len(predictions[l])-1], pics[l])
     longest = max(longest, len(predictions[l]))
 
