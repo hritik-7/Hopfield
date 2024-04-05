@@ -85,18 +85,19 @@ for file in listdir("distinct"):
 
 #corrupted = [randomFlipping(d, 0.4) for d in pics]
 corrupted = [highBlocking(d, 0.4) for d in pics]
-for l in range(len(corrupted)-2):
+for l in range(len(corrupted)):
     print(np.min(corrupted[l]))
     print(np.max(corrupted[l]))
     print(np.min(pics[l]))
     print(np.max(pics[l]))
+    #print(np.mean(pics[l]))
     comparePatterns(corrupted[l], pics[l])
-            
+#exit(1)
 hoppy = ContinuousHopfield(pics)
 
 predictions = []
 longest = 0
-for l in range(len(corrupted)-2):
+for l in range(len(corrupted)):
     predictions.append(hoppy.predict(corrupted[l], 7))
 
     comparePatterns(predictions[l][0], pics[l])
