@@ -72,10 +72,10 @@ def comparePatterns(pat1, pat2):
         print("Amount same = ", valFlipped/len(pat1))
 
 pics = []
-for file in listdir("distinct"):
+for file in listdir("distinct - Copy"):
 #for file in listdir("resizedFlowers"):
     #print(file)
-    foo = Image.open("distinct/"+file).convert("RGB")
+    foo = Image.open("distinct - Copy/"+file).convert("RGB")
     #foo = Image.open("resizedFlowers/"+file).convert("RGB")
 
     #print(foo)
@@ -88,8 +88,8 @@ for file in listdir("distinct"):
 corrupted = [highBlocking(d, 0.4) for d in pics]
 
             
-#hoppy = Hopfield(pics)
-hoppy = DAMDiscreteHopfield(pics)
+hoppy = Hopfield(pics)
+#hoppy = DAMDiscreteHopfield(pics)
 
 predictions = []
 longest = 0

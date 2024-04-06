@@ -98,7 +98,7 @@ hoppy = ContinuousHopfield(pics)
 predictions = []
 longest = 0
 for l in range(len(corrupted)):
-    predictions.append(hoppy.predict(corrupted[l], 7))
+    predictions.append(hoppy.predict(corrupted[l], 2))
 
     comparePatterns(predictions[l][0], pics[l])
     comparePatterns(predictions[l][len(predictions[l])-1], pics[l])

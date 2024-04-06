@@ -16,6 +16,7 @@ class Hopfield:
         self.n = len(inputs[0]) #no. of neurons
         self.itemsLen = len(inputs) # no. of patterns
         self.weights = np.empty((self.n,self.n)) #Connection matrix
+        self.X = np.array(inputs)
 
         #w(ij) ​= ∑p​[s(i)​(p) * s(j)​(p)]
         for i in range(self.itemsLen):
@@ -36,9 +37,13 @@ class Hopfield:
         s = self.energy(predicted[0])
 
         for i in range(0, iterations):
-            #predicted.append(np.sign(self.weights @ predicted[i]))
-            newVal = np.sign(predicted[i] + self.weights @ predicted[i])
-            #predicted.append(np.sign(predicted[i] + self.weights @ predicted[i]))
+            #newVal = np.sign(self.weights @ predicted[i])
+            print("SHAPES", self.X.shape, np.transpose(self.X).shape, predicted[i].shape)
+
+            print("weight check", np.outer(self.X, self.X).shape, (np.transpose(self.X) @ self.X).shape, self.weights.shape)
+            print("weight check", (np.transpose(self.X) @ self.X) == self.weights)
+            print("weight check", ((np.transpose(self.X) @ self.X) == self.weights).sum())
+            newVal = np.sign((self.X @ np.transpose(self.X)) * predicted[i])
             st = self.energy(newVal, theta = theta)
             if s == st:
                 break
@@ -120,18 +125,36 @@ class ContinuousHopfield:
     #Update rule
     #Asynchronously flips all bits randomly
     #Keeps flipped bit if energy is lowered
-    def predict(self, input, iterations = 5, beta = 8):
+    def predict(self, input, iterations = 2, beta = 8):
         print("Predictions")
 
         #input = input/np.linalg.norm(input)
         predicted = [np.copy(input)]
-        energy = self.energy(input, beta)
+        #energy = self.energy(input, beta)
 
         #normx = self.X/np.linalg.norm(self.X)
         
         for l in range(iterations):
-            print("SOFTY",softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])))
-            vals = softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])) @ self.X
+            #print("SOFTY",softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])))
+            #vals = softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])) @ self.X
+
+
+            #weights = np.empty((self.n,self.n))
+            #for i in range(self.N):
+            #    weights += np.outer(beta, self.X[i])
+
+
+            #print("np.outer(self.X, input)", np.outer(self.X, input) )
+            #print("np.outer(self.X, input)", np.outer(self.X, input) )
+
+            #print("weights", weights )
+            #rint("SOFTMAX", softmax(weights * input) )
+
+            print("np.transpose(self.X).shape, input.shape", np.transpose(self.X).shape, input.shape)
+            print("softmax(beta * input @ np.transpose(self.X) )", softmax(beta * input @ np.transpose(self.X) ).shape)
+            newX = np.array([self.X[i]/np.mean(self.X[i]) for i in range(len(self.X))])
+            vals = softmax(beta * input @ np.transpose(newX) ) @ self.X 
+            
 
             #vals = softmax(np.array([np.sum((predicted[l]-self.X[i])**2) for i in range(len(self.X))])) @ self.X
             
@@ -157,11 +180,14 @@ class ContinuousHopfield:
 
             #if noFlip:
             #    break
-            new_energy = self.energy(vals, beta)
+
+
+            #new_energy = self.energy(vals, beta)
             #if not new_energy < energy:
             #    break
-            print("ENERGY", new_energy, energy, new_energy< energy, 2 * self.M**2, self.energy(vals, beta) < 2 * self.M**2)
+            #print("ENERGY", new_energy, energy, new_energy< energy, 2 * self.M**2, self.energy(vals, beta) < 2 * self.M**2)
             predicted.append(vals)
+        print(vals)
         return predicted
     
     def LSE(self, beta, X):
