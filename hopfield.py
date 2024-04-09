@@ -123,71 +123,31 @@ class ContinuousHopfield:
         
     
     #Update rule
-    #Asynchronously flips all bits randomly
-    #Keeps flipped bit if energy is lowered
-    def predict(self, input, iterations = 2, beta = 8):
+    
+    def predict(self, input, iterations = 1, beta = 8):
         print("Predictions")
 
         #input = input/np.linalg.norm(input)
         predicted = [np.copy(input)]
         #energy = self.energy(input, beta)
 
-        #normx = self.X/np.linalg.norm(self.X)
+        newX = np.copy(self.X)
+        newX = np.array([newX[i]/np.mean(newX[i]) for i in range(len(newX))])
+
         
         for l in range(iterations):
-            #print("SOFTY",softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])))
-            #vals = softmax(np.array([np.sum(predicted[l]*self.X[i]) for i in range(len(self.X))])) @ self.X
 
+            input = input/np.mean(input)
 
-            #weights = np.empty((self.n,self.n))
-            #for i in range(self.N):
-            #    weights += np.outer(beta, self.X[i])
-
-
-            #print("np.outer(self.X, input)", np.outer(self.X, input) )
-            #print("np.outer(self.X, input)", np.outer(self.X, input) )
-
-            #print("weights", weights )
-            #rint("SOFTMAX", softmax(weights * input) )
-
-            print("np.transpose(self.X).shape, input.shape", np.transpose(self.X).shape, input.shape)
-            print("softmax(beta * input @ np.transpose(self.X) )", softmax(beta * input @ np.transpose(self.X) ).shape)
-            newX = np.array([self.X[i]/np.mean(self.X[i]) for i in range(len(self.X))])
             vals = softmax(beta * input @ np.transpose(newX) ) @ self.X 
-            
-
-            #vals = softmax(np.array([np.sum((predicted[l]-self.X[i])**2) for i in range(len(self.X))])) @ self.X
-            
-            #vals = softmax(np.array([np.sum(predicted[l]*normx[i]) for i in range(len(self.X))])) @ self.X
-            #vals = softmax(beta * (np.transpose(self.X) @ input)) @ self.X
-
-            #valList = np.arange(0, self.n)
-            #random.shuffle(valList)
-
-
-
-
-            #vals = predicted[l].copy()
-            #noFlip = True
-
-            #for i in valList:
-            #    new_vals = vals.copy()
-            #    new_vals[i] *= -1
-
-            #    if (self.energy(new_vals) - self.energy(vals)) < 0:
-            #        vals[i] = new_vals[i]
-            #        noFlip = False
-
-            #if noFlip:
-            #    break
-
+            #vals = softmax(beta * input @ np.transpose(self.X) ) @ self.X 
+        
 
             #new_energy = self.energy(vals, beta)
             #if not new_energy < energy:
             #    break
             #print("ENERGY", new_energy, energy, new_energy< energy, 2 * self.M**2, self.energy(vals, beta) < 2 * self.M**2)
             predicted.append(vals)
-        print(vals)
         return predicted
     
     def LSE(self, beta, X):

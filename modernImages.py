@@ -17,7 +17,7 @@ def randomFlipping(input, flipCount):
     inv = np.random.binomial(n=1, p=flipCount, size=len(input))
     for i, v in enumerate(input):
         if inv[i]:
-            flippy[i] = -1 * v
+            flippy[i] = random.uniform(0, 1)
     return flippy
 
 #Invert full pattern
@@ -83,8 +83,10 @@ for file in listdir("distinct"):
     pics.append(linear)
 
 
-#corrupted = [randomFlipping(d, 0.4) for d in pics]
-corrupted = [highBlocking(d, 0.4) for d in pics]
+corrupted = [randomFlipping(d, 0.95) for d in pics]
+#corrupted = [highBlocking(d, 0.4) for d in pics]
+#print(np.array(corrupted).shape)
+#exit(1)
 for l in range(len(corrupted)):
     print(np.min(corrupted[l]))
     print(np.max(corrupted[l]))
@@ -92,7 +94,8 @@ for l in range(len(corrupted)):
     print(np.max(pics[l]))
     #print(np.mean(pics[l]))
     comparePatterns(corrupted[l], pics[l])
-#exit(1)
+
+
 hoppy = ContinuousHopfield(pics)
 
 predictions = []
@@ -100,8 +103,8 @@ longest = 0
 for l in range(len(corrupted)):
     predictions.append(hoppy.predict(corrupted[l], 2))
 
-    comparePatterns(predictions[l][0], pics[l])
-    comparePatterns(predictions[l][len(predictions[l])-1], pics[l])
+    #comparePatterns(predictions[l][0], pics[l])
+    #comparePatterns(predictions[l][len(predictions[l])-1], pics[l])
     longest = max(longest, len(predictions[l]))
 
     predictions[l] = [reshape(predictions[l][i]) for i in range(len(predictions[l]))]
