@@ -4,14 +4,13 @@
 
 import numpy as np
 
-from torchvision import transforms
 from scipy.special import softmax
-from scipy.special import logsumexp
+#from scipy.special import logsumexp
+import random
 
 class Hopfield:
     #Initialisation function, gets weights for bipolar patterns
     def __init__(self, inputs):
-        print("INITIALISING")
 
         self.n = len(inputs[0]) #no. of neurons
         self.itemsLen = len(inputs) # no. of patterns
@@ -30,20 +29,15 @@ class Hopfield:
     #yi = yini{1 if > =0, else 0}
     #Iterates until hits iteration count or energy minimized
     def predict(self, input, iterations, theta = 0.0):
-        print("Predictions")
+        #print("Predictions")
 
         predicted = [np.copy(input)]
 
         s = self.energy(predicted[0])
 
         for i in range(0, iterations):
-            #newVal = np.sign(self.weights @ predicted[i])
-            print("SHAPES", self.X.shape, np.transpose(self.X).shape, predicted[i].shape)
+            newVal = np.sign(self.weights @ predicted[i])
 
-            print("weight check", np.outer(self.X, self.X).shape, (np.transpose(self.X) @ self.X).shape, self.weights.shape)
-            print("weight check", (np.transpose(self.X) @ self.X) == self.weights)
-            print("weight check", ((np.transpose(self.X) @ self.X) == self.weights).sum())
-            newVal = np.sign((self.X @ np.transpose(self.X)) * predicted[i])
             st = self.energy(newVal, theta = theta)
             if s == st:
                 break
@@ -55,15 +49,11 @@ class Hopfield:
     def energy(self, state, theta = 0.0):
         return -0.5 * state @ self.weights @ state + np.sum(state*theta)
     
-import random
-
 class DAMDiscreteHopfield:
     #based on 'Dense Associative Memory for Pattern Recognition' paper
 
     #Initialisation function
     def __init__(self, inputs):
-        print("INITIALISING")
-
         self.n = len(inputs[0]) #no. of neurons
         self.N = len(inputs) # no. of patterns
         self.X = np.copy(inputs)
@@ -73,7 +63,6 @@ class DAMDiscreteHopfield:
     #Asynchronously flips all bits randomly
     #Keeps flipped bit if energy is lowered
     def predict(self, input, iterations = 5):
-        print("Predictions")
 
         predicted = [np.copy(input)]
         
@@ -81,17 +70,22 @@ class DAMDiscreteHopfield:
             valList = np.arange(0, self.n)
             random.shuffle(valList)
 
+
             vals = predicted[l].copy()
             noFlip = True
+
+            prev = self.energy(vals)
 
             for i in valList:
                 new_vals = vals.copy()
                 new_vals[i] *= -1
 
-                if (self.energy(new_vals) - self.energy(vals)) < 0:
+                current = self.energy(new_vals)
+
+                if (current - prev) < 0:
+                    prev = self.energy(new_vals)
                     vals[i] = new_vals[i]
                     noFlip = False
-
             if noFlip:
                 break
             predicted.append(vals)
@@ -99,7 +93,7 @@ class DAMDiscreteHopfield:
     
     #-∑F(state * X[i])
     def energy(self, state):
-        x = np.array([(state*self.X[i]).sum() for i in range(len(self.X))])
+        x = self.X@state
         return -self.F(x, 2).sum()
     
     #F (x) = {if x > 0, x^n, else 0}
@@ -107,66 +101,50 @@ class DAMDiscreteHopfield:
         x[x < 0] = 0.
         return x**n
 
-
+#Continuous Hopfield
+#Based on:
+#Hopfield Networks is All You Need
 class ContinuousHopfield:
     #based on 'Dense Associative Memory for Pattern Recognition' paper
 
     #Initialisation function
     def __init__(self, inputs):
-        print("INITIALISING")
-
         self.n = len(inputs[0]) #no. of neurons
-        #self.M = len(inputs[0]) #Max Length (Probably)
         self.M = np.linalg.norm(inputs[0])
         self.N = len(inputs) # no. of patterns
         self.X = np.copy(inputs)
+
+        newX = np.copy(self.X)
+        self.newX = np.array([newX[i]/np.mean(newX[i]) for i in range(len(newX))])
         
     
     #Update rule
-    
+    #X softmax(beta X^T ξ)
     def predict(self, input, iterations = 1, beta = 8):
-        print("Predictions")
-
-        #input = input/np.linalg.norm(input)
         predicted = [np.copy(input)]
         #energy = self.energy(input, beta)
 
-        newX = np.copy(self.X)
-        newX = np.array([newX[i]/np.mean(newX[i]) for i in range(len(newX))])
-
-        
-        for l in range(iterations):
-
-            input = input/np.mean(input)
-
-            vals = softmax(beta * input @ np.transpose(newX) ) @ self.X 
+        for i in range(iterations):
+            vals = softmax(beta * predicted[i] @ np.transpose(self.newX) ) @ self.X 
             #vals = softmax(beta * input @ np.transpose(self.X) ) @ self.X 
         
-
             #new_energy = self.energy(vals, beta)
             #if not new_energy < energy:
             #    break
             #print("ENERGY", new_energy, energy, new_energy< energy, 2 * self.M**2, self.energy(vals, beta) < 2 * self.M**2)
+            
+            #if vals == predicted[i]:
+            #    break
             predicted.append(vals)
         return predicted
     
+    # log(∑i[exp(βxi)])/β
     def LSE(self, beta, X):
         return np.log(np.sum([np.exp(beta*X[i]) for i in range(len(X))])) / beta
     
-    #-∑F(state * X[i])
+    #Energy rule
+    # E = − lse(β, X^T ξ) + 0.5 * ξ^T ξ + log(N)/β + 0.5 * M^2   
     def energy(self, state, beta):
-        print("0.5*np.transpose(state)*state", 0.5*np.transpose(state)@state)
-        print("np.log(self.N)/beta", np.log(self.N)/beta)
-        print("0.5 * self.M**2", 0.5 * self.M**2)
-        #lse = -self.LSE(beta, np.array([state*self.X[i] for i in range(len(self.X))]))
-        
-        #print("np.transpose(state)@state",np.transpose(self.X[0])@state)
-        #print("state * state",self.X[0] * state)
-        #print("np.exp(beta * self.X[i] * state)", np.exp(beta * self.X[0] * state))
-        
-        #lse = -np.log(np.sum([np.exp(beta * self.X[i] * state) for i in range(len(self.X))])) / beta
         lse = -np.log(np.sum([np.exp(beta * self.X[i] * state) for i in range(len(self.X))])) / beta
-        print("lse",lse)
-        #x = -self.LSE(beta, np.transpose(self.X) ) + 0.5*np.transpose(state)@state + np.log(self.N)/beta + 0.5 * self.M**2
         x = lse + 0.5*np.transpose(state)@state + np.log(self.N)/beta + 0.5 * self.M**2
         return x

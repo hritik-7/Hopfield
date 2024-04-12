@@ -1,4 +1,18 @@
-#import torch, torchvision
+#Hopfield and DAM class
+
+import numpy as np
+from PIL import Image
+from os import listdir
+
+from skimage.color import rgb2gray
+from skimage.transform import resize
+
+from matplotlib import pyplot as plt
+from hopfield import *
+
+import random
+#from helper import *
+
 import numpy as np
 from PIL import Image
 from os import listdir
@@ -12,7 +26,6 @@ from hopfield import DAMDiscreteHopfield
 
 import random
 
-
 #Randomly inverts data
 def randomFlipping(input, flipCount):
     flippy = np.copy(input)
@@ -21,11 +34,6 @@ def randomFlipping(input, flipCount):
         if inv[i]:
             flippy[i] = -1 * v
     return flippy
-
-##Invert full pattern
-#def fullFlipping(input):
-#    flippy = np.copy(input)
-#    return [-1 * flippy[i] for i in range(len(flippy))]
 
 #Removes random chunk of data
 def randomBlocking(input, blockLevel):
@@ -58,60 +66,94 @@ def reshape(data):
     return data
 
 def comparePatterns(pat1, pat2):
-    #numpy.array_equal(a1, a2, equal_nan=False)
     valNormal = np.sum(pat1 == pat2)
-    #valFlipped = np.sum(pat1 == fullFlipping(pat2))
     valFlipped = np.sum(pat1 == pat2 * -1)
     if valNormal > valFlipped:
-        print("Best normal")
         print("Amount same = ", valNormal/len(pat1))
+        return valNormal/len(pat1)
     elif valNormal < valFlipped:
-        print("Best flipped")
         print("Amount same = ", valFlipped/len(pat1))
+        return valFlipped/len(pat1)
     else:
         print("Amount same = ", valFlipped/len(pat1))
+        return valFlipped/len(pat1)
 
+def getAccuracy(originals, finalised):
+    correct = 0
+    for i in range(len(originals)):
+        valNormal = np.sum(finalised[i][-1] == originals[i])
+        valFlipped = np.sum(finalised[i][-1] == originals[i] * -1)
+        if valNormal == 1 or valFlipped == 0:
+            correct += 1
+    return correct/len(originals)
+
+def resultsPlotter(original, iterations):
+    longest  = 1
+    for i in range(len(iterations)):
+        longest = max(longest, len(iterations[i])+1)
+    fig, axarr = plt.subplots(len(original), longest, figsize=(10, 10))
+    axarr[0, 0].set_title('Originals')
+    axarr[0, 1].set_title('Corrupted')
+
+    for l in range(0, len(original)):
+        for i in range(0, longest):
+            axarr[l, i].axis('off')
+
+
+    for l in range(0, len(original)):
+        axarr[l, 0].imshow(original[l])
+        axarr[l, 0].axis('off')
+
+
+    for l in range(0, len(iterations)):
+        for i in range(0, len(iterations[l])):
+            axarr[0, i+1].set_title('Iteration ' +str(i))
+            axarr[l, i+1].imshow(iterations[l][i])
+            axarr[l, i+1].axis('off')
+
+
+    plt.tight_layout()
+    plt.savefig("result.png")
+    plt.show()
+
+
+
+
+
+
+print("Loading images")
+picNumber = 0
 pics = []
-for file in listdir("distinct - Copy"):
-#for file in listdir("resizedFlowers"):
-    #print(file)
-    foo = Image.open("distinct - Copy/"+file).convert("RGB")
-    #foo = Image.open("resizedFlowers/"+file).convert("RGB")
+for file in listdir("distinct"):
+    foo = Image.open("distinct/"+file).convert("RGB")
 
-    #print(foo)
     linear = preprocessing(rgb2gray(foo))
-    #print(linear)
     pics.append(linear)
+    picNumber+=1
+    if picNumber > 5:
+        break
 
+print("Corrupting Images")
 
 #corrupted = [randomFlipping(d, 0.4) for d in pics]
 corrupted = [highBlocking(d, 0.4) for d in pics]
-
-            
+           
 hoppy = Hopfield(pics)
 #hoppy = DAMDiscreteHopfield(pics)
 
+
 predictions = []
 longest = 0
-for l in range(len(corrupted)):
-    predictions.append(hoppy.predict(corrupted[l], 7))
 
-    comparePatterns(predictions[l][len(predictions[l])-1], pics[l])
+print("Running hopfield")
+for l in range(len(corrupted)):
+    predictions.append(hoppy.predict(corrupted[l], 3))
+
+    comparePatterns(predictions[l][-1], pics[l])
     longest = max(longest, len(predictions[l]))
 
     predictions[l] = [reshape(predictions[l][i]) for i in range(len(predictions[l]))]
 
-
-fig, axarr = plt.subplots(longest+1, len(predictions), figsize=(10, 10))
-for l in range(len(predictions)):
-    for i in range(len(predictions[l])+1):
-        if i==0:
-            axarr[i, l].imshow(reshape(pics[l]))
-            axarr[i, l].axis('off')
-        else:
-            axarr[i, l].imshow(predictions[l][i-1])
-            axarr[i, l].axis('off')
-
-plt.tight_layout()
-plt.savefig("result.png")
-plt.show()
+#print(getAccuracy(pics, predictions))
+pics = [reshape(pics[i]) for i in range(len(pics))]
+resultsPlotter(pics, predictions)
