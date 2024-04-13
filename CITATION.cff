@@ -1,1 +1,14 @@
-
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "James"
+  given-names: "Scott"
+- family-names: "Mehta"
+  given-names: "Hritik"
+- family-names: "Pearce"
+  given-names: "Adam"
+title: "Hopfield"
+version: 1.0.0
+doi: 10.5281/zenodo.1234
+date-released: 2024-04-13
+url: "https://github.com/SOJ281/Hopfield"
