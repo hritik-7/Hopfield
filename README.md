@@ -14,7 +14,7 @@ The modernImages.py, and colourImages.py both run the continuous hopfield networ
 
 Implements a basic Hopfield network.
 
-__init__(inputs):
+**__init__(inputs):**
 
 Initializes a Hopfield network with given input patterns.
 
@@ -24,7 +24,7 @@ Initializes a Hopfield network with given input patterns.
     Returns:
         None
 
-predict(input, iterations, theta=0.0):
+**predict(input, iterations, theta=0.0):**
 
 Predicts the output pattern given an input pattern.
 
@@ -40,7 +40,7 @@ Predicts the output pattern given an input pattern.
 
 Implements a Dense Associative Memory (DAM) Hopfield network for discrete patterns.
 
-__init__(inputs):
+**__init__(inputs):**
 
 Initializes a DAM Hopfield network with given input patterns.
 
@@ -50,7 +50,7 @@ Initializes a DAM Hopfield network with given input patterns.
     Returns:
         None
 
-predict(input, iterations):
+**predict(input, iterations):**
 
 Predicts the output pattern given an input pattern.
 
@@ -65,7 +65,7 @@ Predicts the output pattern given an input pattern.
 
 Implements a Hopfield network for continuous patterns.
 
-__init__(inputs):
+**__init__(inputs):**
 
 Initializes a Continuous Hopfield network with given input patterns.
 
@@ -75,7 +75,7 @@ Initializes a Continuous Hopfield network with given input patterns.
     Returns:
         None
 
-predict(input, iterations, beta=8):
+**predict(input, iterations, beta=8):**
 
 Predicts the output pattern given an input pattern.
 
